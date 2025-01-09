@@ -97,7 +97,9 @@ async function refreshToken(req, res) {
 // Validate Access Token and Return User Data
 async function validateToken(req, res) {
   try {
-    console.log(456)
+    let userBytoken = await User.findOne({mobileNumber: req.user.mobileNumber, refreshToken: req.body.refresh_token });
+    if (!userBytoken) return res.status(403).json({ message: 'User not found',logout_user:true });
+
     // `req.user` is available from the `authMiddleware` if token is valid
     const user = await User.findOne({ mobileNumber: req.user.mobileNumber });
 
