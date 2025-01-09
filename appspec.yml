@@ -1,0 +1,10 @@
+version: 0.0
+os: linux
+files:
+  - source: /
+    destination: /home/proddeployuser/workspace/sauth0-api
+hooks: 
+  AfterInstall:
+    - location: scripts/after_install.sh
+      timeout: 300
+      runas: proddeployuser

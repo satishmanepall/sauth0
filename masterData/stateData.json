@@ -1,0 +1,14 @@
+{
+  "data": [
+    {
+      "state_name": "Telangana",
+      "state_code": "TS",
+      "is_active": true
+    },
+    {
+      "state_name": "AndhrePradesh",
+      "state_code": "AP",
+      "is_active": true
+    }
+  ]
+}

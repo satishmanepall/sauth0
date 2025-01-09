@@ -1,0 +1,42 @@
+{
+  "name": "sauth0-api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack",
+    "start": "node src/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://git.samyutha.com/sam-components/sauth0/sauth0-api.git"
+  },
+  "devDependencies": {
+    "webpack": "^5.16.0",
+    "webpack-cli": "^4.4.0"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@aws-sdk/client-sns": "^3.687.0",
+    "axios": "^1.7.9",
+    "bcrypt": "^5.1.1",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "express-useragent": "^1.0.15",
+    "firebase-admin": "^12.5.0",
+    "handlebars": "^4.7.8",
+    "helmet": "^7.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "jwt-decode": "^4.0.0",
+    "log4js": "^6.9.1",
+    "mongodb-client-encryption": "^6.0.1",
+    "mongoose": "^8.6.2",
+    "nodemailer": "^6.9.15",
+    "request": "^2.88.2",
+    "twilio": "^5.3.7"
+  }
+}
