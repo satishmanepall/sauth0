@@ -33,7 +33,7 @@ if [ ! -f "$CURRENT_CODE_PATH/.env" ]; then
     echo "Error: .env file could not be downloaded or copied!"
     exit 1
 else
-    echo ".env file downloaded and copied successfully!"
+    echo ".env file downloaded and copied successfully!!!!!"
 fi
 
 # Remove the old Docker service if it exists
