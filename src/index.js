@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const helmet = require("helmet");
 const path = require("path");
+const requestLogger = require('./middlewares/requestLogger')
 const connectDB = require('./config/db');
 //const swaggerUi = require("swagger-ui-express");
 //const swaggerFile = require("../swagger_output.json");
@@ -13,7 +14,8 @@ mongoose.set("strictQuery", true);
 const app = express();
 const PORT = process.env.PORT;
 app.set("port", PORT);
-
+// Use request logging middleware
+app.use(requestLogger)
 // helmet for security purpose
 app.use(helmet());
 // Connect to MongoDB
