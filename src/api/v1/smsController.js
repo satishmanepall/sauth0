@@ -53,7 +53,7 @@ async function verifyOTP(req, res) {
   user.newRefreshToken = refreshToken;
   user.oldRefreshToken = "";
   user.accessToken = accessToken;
-  //user.otp = null; // Clear OTP after verification
+  user.otp = null; // Clear OTP after verification
   await user.save();
 
   res.json({ "success": true, accessToken, refreshToken ,userId:user?._id});
@@ -117,6 +117,14 @@ async function refreshToken(req, res) {
 
     // Check if access token is valid or expired
     jwtUtils.verifyToken(user.accessToken, "bsxasjbcsabc", async (err, decoded) => {
+        if (!err) {
+        // Access token is still valid
+        return res.json({
+          message: "Access token is still valid.",
+          accessToken: user.accessToken,
+          refreshToken: user.newRefreshToken
+        });
+      }
       // Access token expired; generate a new one
       const userObj = {
         userId: user._id.toString(),
