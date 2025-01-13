@@ -117,14 +117,22 @@ async function refreshToken(req, res) {
 
     // Check if access token is valid or expired
     jwtUtils.verifyToken(user.accessToken, "bsxasjbcsabc", async (err, decoded) => {
-        if (!err) {
         // Access token is still valid
-        return res.json({
-          message: "Access token is still valid.",
-          accessToken: user.accessToken,
-          refreshToken: user.newRefreshToken
-        });
-      }
+    if (!err) {
+      const currentTimeInSeconds = Math.floor(Date.now() / 1000);
+    const timeRemaining = decoded.exp - currentTimeInSeconds; // Remaining time in seconds
+
+    console.log("Access token time remaining:", timeRemaining);
+
+    // If time remaining is more than 3 minutes, return the current access token
+    if (timeRemaining > 3 * 60) {
+      return res.json({
+        message: "Access token is still valid.",
+        accessToken: user.accessToken,
+        refreshToken: user.newRefreshToken
+      });
+    }
+  }
       // Access token expired; generate a new one
       const userObj = {
         userId: user._id.toString(),
