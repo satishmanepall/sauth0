@@ -5,7 +5,7 @@ function generateAccessToken(payload) {
 }
 
 function generateRefreshToken(payload) {
-  return jwt.sign(payload, "bsxasjbcsabc", { expiresIn: '7m' });
+  return jwt.sign(payload, "bsxasjbcsabc", { expiresIn: '7d' });
 }
 
 function verifyToken(token, secret, callback) {
