@@ -44,9 +44,9 @@ async function verifyOTP(req, res) {
   const { mobileNumber, otp } = req.body;
   const user = await User.findOne({ mobileNumber });
 
-  // if (!user || user.otp !== otp || user.otpExpiresAt < Date.now()) {
-  //   return res.status(200).json({status_code:0, error: 'Invalid or expired OTP' });
-  // }
+  if (!user || user.otp !== otp || user.otpExpiresAt < Date.now()) {
+    return res.status(200).json({status_code:0, error: 'Invalid or expired OTP' });
+  }
 
   const accessToken = jwtUtils.generateAccessToken({ mobileNumber });
   const refreshToken = jwtUtils.generateRefreshToken({ mobileNumber });
