@@ -86,7 +86,7 @@ async function refreshToken(req, res) {
         return res.status(403).json({ error: 'Invalid refresh token' });
       }
 
-      const gracePeriodEnds = expiredAt + 2 * 60 * 1000; // Add 2-minute grace period
+      const gracePeriodEnds = expiredAt + 2880 * 60 * 1000; // Add 2-minute grace period
       const currentTime = Date.now();
 
       if (currentTime > gracePeriodEnds) {
@@ -102,7 +102,7 @@ async function refreshToken(req, res) {
          return res.status(403).json({ error: 'Invalid refresh token' });
        }
 
-       const gracePeriodEnds = expiredAt + 5 * 60 * 1000; // Add 2-minute grace period
+       const gracePeriodEnds = expiredAt + 2880 * 60 * 1000; // Add 2-minute grace period
        const currentTime = Date.now();
 
        if (currentTime > gracePeriodEnds) {
@@ -148,7 +148,7 @@ async function refreshToken(req, res) {
 
       console.log("timeRemaining:", timeRemaining);
 
-      if (timeRemaining > 5 * 60 || tokenOld) {
+      if (timeRemaining > 1440 * 60 || tokenOld) {
         // If the token is still valid (new token), return the same refresh token
         await user.save();
         return res.json({
