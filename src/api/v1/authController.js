@@ -132,10 +132,10 @@ const loginUser = async (req, res) => {
     const accessToken = jwtUtils.generateAccessToken({ email,userId:result._id });
     const refreshToken = jwtUtils.generateRefreshToken({ email });
     var obj = {
-      refreshToken: refreshToken
+      newRefreshToken: refreshToken
     }
     delete result.password
-    delete result.refreshToken
+    delete result.newRefreshToken
     await userService.updateUser(obj, result._id)
     // Step 3: Send a successful response with the token and user info
     let getRolePermission = await rolePermissionService.getRolePermissionByRole(result?.role[0])
