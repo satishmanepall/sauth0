@@ -40,12 +40,13 @@ fi
 docker service rm sauth0-api
 
 # Clean up Docker system
-docker system prune -a
+docker system prune -a -f
 
 # Build the new Docker image
+cd /home/proddeployuser/workspace/sauth0-api
 docker build -t sauth0-api -f Dockerfile .
 
 # Create a new Docker service
-docker service create --name sauth0-api --replicas 2 -p 3002:3002 sauth0-api:latest
+docker service create --name sauth0-api --replicas 1 -p 3002:3002 sauth0-api:latest
 
 echo "Deployment completed successfully!"
