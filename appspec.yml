@@ -2,7 +2,7 @@ version: 0.0
 os: linux
 files:
   - source: /
-    destination:  /home/proddeployuser/workspace/sauth0-api
+    destination: /opt/codedeploy-agent/deployment-root/${SAUT0-API-DEPLOYMENT-ID}/deployment-archive
 hooks:
   AfterInstall:
     - location: scripts/after_install.sh
