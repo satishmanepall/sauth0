@@ -2,6 +2,7 @@ const { sendSMS } = require('../../service/smsService');
 const otpService = require('../../service/otpService');
 const jwtUtils = require('../../_utils/jwtUtils');
 const User = require('../../dbModel/userModel/schema');
+const jwt = require('jsonwebtoken');
 
 
 const sendSMSHandler = async (req, res) => {
@@ -49,55 +50,181 @@ async function verifyOTP(req, res) {
 
   const accessToken = jwtUtils.generateAccessToken({ mobileNumber });
   const refreshToken = jwtUtils.generateRefreshToken({ mobileNumber });
-  user.refreshToken = refreshToken;
+  user.newRefreshToken = refreshToken;
+  user.oldRefreshToken = "";
+  user.accessToken = accessToken;
   user.otp = null; // Clear OTP after verification
   await user.save();
 
   res.json({ "success": true, accessToken, refreshToken ,userId:user?._id});
 }
-// Refresh access token
 async function refreshToken(req, res) {
-  const { token } = req.body;
-  console.log(token)
-
+  const { token } = req.body; // Refresh token from the request
   try {
     // Find user by refresh token
-    let user = await User.findOne({ refreshToken: token });
-    if (!user) return res.status(403).json({ error: 'Invalid refresh token' });
-    //user = JSON.parse(JSON.stringify(user)); // Convert to plain JS objects if needed
+    const user = await User.findOne({
+      $or: [{ newRefreshToken: token }, { oldRefreshToken: token }]
+    });
 
-    // Verify refresh token
-    const isTokenValid = jwtUtils.verifyRefreshToken(token, "bsxasjbcsabc");
-    console.log(isTokenValid)
-    if (!isTokenValid) return res.status(403).json({ error: 'Expired refresh token' });
-
-    // Generate new tokens
-    var userObj={}
-    if(user?.email){
-      userObj.email=user?.email
-      userObj.userId=user?._id.toString()
+    if (!user) {
+      return res.status(403).json({ error: 'Invalid refresh token' });
     }
-    if(user?.mobileNumber){
-      userObj.mobileNumber=user?.mobileNumber
-      userObj.userId=user?._id.toString()
+
+    // Check if the token is `newRefreshToken` or `oldRefreshToken`
+    const isOldToken = user.oldRefreshToken === token;
+
+    // Decode refresh token
+
+   // Decode refresh token and handle expiration
+   let decodedRefreshToken;
+   let tokenOld=false
+   try {
+     decodedRefreshToken = jwtUtils.verifyRefreshToken(token, "bsxasjbcsabc");
+     if (isOldToken) {
+      const expiredAt = jwt.decode(token)?.exp * 1000; // Decode the token to get expiry time
+      if (!expiredAt) {
+        return res.status(403).json({ error: 'Invalid refresh token' });
+      }
+
+      const gracePeriodEnds = expiredAt + 2880 * 60 * 1000; // Add 2-minute grace period
+      const currentTime = Date.now();
+
+      if (currentTime > gracePeriodEnds) {
+        return res.status(403).json({ error: 'Expired refresh token (grace period exceeded)' });
+      }
+      tokenOld=true
     }
-    const newAccessToken = jwtUtils.generateAccessToken(userObj);
-    const newRefreshToken = jwtUtils.generateRefreshToken(userObj);
+   } catch (err) {
+     // If token verification fails, check for grace period (only for `oldRefreshToken`)
+     if (isOldToken) {
+       const expiredAt = jwt.decode(token)?.exp * 1000; // Decode the token to get expiry time
+       if (!expiredAt) {
+         return res.status(403).json({ error: 'Invalid refresh token' });
+       }
 
-    // Update the user's refresh token in the database
-    user.refreshToken = newRefreshToken;
-    await user.save();
+       const gracePeriodEnds = expiredAt + 2880 * 60 * 1000; // Add 2-minute grace period
+       const currentTime = Date.now();
 
-    res.json({ accessToken: newAccessToken, refreshToken: newRefreshToken });
+       if (currentTime > gracePeriodEnds) {
+         return res.status(403).json({ error: 'Expired refresh token (grace period exceeded)' });
+       }
+       tokenOld=true
+     } else {
+       return res.status(403).json({ error: 'Expired refresh token' });
+     }
+   }
+
+
+    // Check if access token is valid or expired
+    jwtUtils.verifyToken(user.accessToken, "bsxasjbcsabc", async (err, decoded) => {
+        // Access token is still valid
+    if (!err) {
+      const currentTimeInSeconds = Math.floor(Date.now() / 1000);
+    const timeRemaining = decoded.exp - currentTimeInSeconds; // Remaining time in seconds
+
+    console.log("Access token time remaining:", timeRemaining);
+
+    // If time remaining is more than 3 minutes, return the current access token
+    if (timeRemaining > 1 * 60) {
+      return res.json({
+        message: "Access token is still valid.",
+        accessToken: user.accessToken,
+        refreshToken: user.newRefreshToken
+      });
+    }
+  }
+      // Access token expired; generate a new one
+      const userObj = {
+        userId: user._id.toString(),
+        email: user.email,
+        mobileNumber: user.mobileNumber
+      };
+      const newAccessToken = jwtUtils.generateAccessToken(userObj);
+      user.accessToken = newAccessToken;
+
+      // Check if the refresh token is still valid (i.e., before the expiry time)
+      const currentTimeInSeconds = Math.floor(Date.now() / 1000); // Current time in seconds
+      const timeRemaining = decodedRefreshToken.exp - currentTimeInSeconds; // Remaining time in seconds
+
+      console.log("timeRemaining:", timeRemaining);
+
+      if (timeRemaining > 1440 * 60 || tokenOld) {
+        // If the token is still valid (new token), return the same refresh token
+        await user.save();
+        return res.json({
+          message: "Refresh token is still valid.",
+          accessToken: newAccessToken,
+          refreshToken: user.newRefreshToken
+        });
+      }
+
+      // Generate a new refresh token
+      const newRefreshToken = jwtUtils.generateRefreshToken(userObj);
+      user.oldRefreshToken = user.newRefreshToken; // Move current refresh token to old
+      user.newRefreshToken = newRefreshToken; // Save the new refresh token
+      await user.save();
+
+      res.json({
+        message: "Tokens refreshed successfully.",
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken
+      });
+    });
   } catch (error) {
+    console.error("Error refreshing token:", error);
     res.status(500).json({ error: 'Failed to refresh token' });
   }
 }
 
+
+
+
+
+// // Refresh access token
+// async function refreshToken(req, res) {
+//   const { token } = req.body;
+//   console.log(token)
+
+//   try {
+//     // Find user by refresh token
+//     let user = await User.findOne({ refreshToken: token });
+//     if (!user) return res.status(403).json({ error: 'Invalid refresh token' });
+//     //user = JSON.parse(JSON.stringify(user)); // Convert to plain JS objects if needed
+
+//     // Verify refresh token
+//     const isTokenValid = jwtUtils.verifyRefreshToken(token, "bsxasjbcsabc");
+//     console.log(isTokenValid)
+//     if (!isTokenValid) return res.status(403).json({ error: 'Expired refresh token' });
+
+//     // Generate new tokens
+//     var userObj={}
+//     if(user?.email){
+//       userObj.email=user?.email
+//       userObj.userId=user?._id.toString()
+//     }
+//     if(user?.mobileNumber){
+//       userObj.mobileNumber=user?.mobileNumber
+//       userObj.userId=user?._id.toString()
+//     }
+//     const newAccessToken = jwtUtils.generateAccessToken(userObj);
+//     const newRefreshToken = jwtUtils.generateRefreshToken(userObj);
+
+//     // Update the user's refresh token in the database
+//     user.refreshToken = newRefreshToken;
+//     await user.save();
+
+//     res.json({ accessToken: newAccessToken, refreshToken: newRefreshToken });
+//   } catch (error) {
+//     res.status(500).json({ error: 'Failed to refresh token' });
+//   }
+// }
+
 // Validate Access Token and Return User Data
 async function validateToken(req, res) {
   try {
-    console.log(456)
+    // let userBytoken = await User.findOne({mobileNumber: req.user.mobileNumber, refreshToken: req.body.refresh_token });
+    // if (!userBytoken) return res.status(403).json({ message: 'User not found',logout_user:true });
+
     // `req.user` is available from the `authMiddleware` if token is valid
     const user = await User.findOne({ mobileNumber: req.user.mobileNumber });
 
