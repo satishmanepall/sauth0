@@ -13,8 +13,10 @@
     "url": "https://git.samyutha.com/sam-components/sauth0/sauth0-api.git"
   },
   "devDependencies": {
-    "webpack": "^5.16.0",
-    "webpack-cli": "^4.4.0"
+    "install": "^0.13.0",
+    "npm": "^11.0.0",
+    "webpack": "^5.97.1",
+    "webpack-cli": "^4.10.0"
   },
   "author": "",
   "license": "ISC",
