@@ -8,6 +8,9 @@ WORKDIR /opt/
 COPY package.json ./
 RUN npm install -g node-gyp
 RUN npm install --timeout=600000
+RUN rm -rf node_modules package-lock.json
+RUN npm install
+RUN npm install --save-dev webpack webpack-cli
 RUN npm install webpack-node-externals
 
 
