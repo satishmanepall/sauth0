@@ -1,37 +1,32 @@
-FROM public.ecr.aws/docker/library/node:16
+FROM public.ecr.aws/docker/library/node:20
 
-
-# Setting up the working directory
-WORKDIR /opt/
-
-# Copying package.json and installing dependencies
-COPY package.json ./
-RUN npm install -g node-gyp
-RUN npm install --timeout=600000
-RUN rm -rf node_modules package-lock.json
-RUN npm install
-RUN npm install --save-dev webpack webpack-cli
-RUN npm install webpack-node-externals
-
-
-#RUN npm config set timeout 600000 && npm install
-
-# Adding node_modules to PATH
-ENV PATH /opt/node_modules/.bin:$PATH
-
-# Moving to the app directory and copying source files
+# Set the working directory
 WORKDIR /opt/app
+
+# Copy only package.json and package-lock.json first for dependency installation
+COPY package.json package-lock.json ./
+
+# Install global dependencies
+RUN npm install -g node-gyp
+
+# Install application dependencies
+RUN npm install --timeout=600000
+
+# Copy the rest of the application files
 COPY . .
 
-# Setting permissions and user
+# Install Webpack and related dev dependencies for building the app
+RUN npm install --save-dev webpack webpack-cli webpack-node-externals
+
+# Build the application
+RUN npm run build
+
+# Expose the port the app will run on
+EXPOSE 3002
+
+# Set permissions to ensure the application runs as a non-root user
 RUN chown -R node:node /opt/app
 USER node
 
-# Building the application
-RUN npm install
-RUN npm run build
-
-# Exposing the port and starting the application
-EXPOSE 3002
+# Start the application
 CMD ["npm", "start"]
-
