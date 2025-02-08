@@ -194,6 +194,22 @@ const updatePassword = async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 };
+
+// 4. Update password (for logged-in users)
+const updateUserData = async (req, res) => {
+  const {userId, roles } = req.body;
+  try {
+    var obj={
+      role:roles
+    }
+    await userService.updateUser(obj, userId)
+    res.status(200).json({ message: 'User update successfully.' });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
+
 // Function to generate a random password
 async function generateRandomPassword() {
   // Define character sets
@@ -238,4 +254,4 @@ function generateRandomDisplayName(length) {
   }
   return result;
 }
-module.exports = {sendPasswordResetLink,verifyResetToken,resetPassword,updatePassword, loginUser, requestOTP, verifyOTP, refreshToken, validateToken, signUpWithEmailandPassword };
+module.exports = {updateUserData,sendPasswordResetLink,verifyResetToken,resetPassword,updatePassword, loginUser, requestOTP, verifyOTP, refreshToken, validateToken, signUpWithEmailandPassword };
