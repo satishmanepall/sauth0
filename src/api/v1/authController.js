@@ -198,6 +198,7 @@ const updatePassword = async (req, res) => {
 // 4. Update password (for logged-in users)
 const updateUserData = async (req, res) => {
   const {userId, roles } = req.body;
+  console.log("updateUserData",userId,roles)
   try {
     var obj={
       role:roles
