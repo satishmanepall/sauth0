@@ -6,14 +6,19 @@ const jwt = require('jsonwebtoken');
 
 
 const sendSMSHandler = async (req, res) => {
+
   const { to, message, otp ,name,type} = req.body;
+  console.log(to+" <--> "+message+" "+otp+" "+name+" "+type)
+ // console.log("test ");
   if (!to || !message || !otp) {
+    console.log("Here 123")
     return res.status(400).json({ success: false, message: 'Missing "to", "message", or "otp" fields' });
   }
-
+console.log("Here 1234")
   try {
     // Store OTP and other details in the database immediately
     const updateUser = await otpService.setOTPForUser(to, otp, message,name);
+     console.log(updateUser+" 0011");
     if(updateUser && (type === undefined || type === "internal" || type === "external")){
  // Trigger SMS sending in the background
  sendSMS(to, message)
@@ -36,6 +41,7 @@ const sendSMSHandler = async (req, res) => {
     // Respond immediately
     return res.status(200).json({ success: true, message: 'OTP processing started' });
   } catch (error) {
+    console.log("Here 1235")
     return res.status(500).json({ success: false, error: error.message });
   }
 };
@@ -81,12 +87,12 @@ async function refreshToken(req, res) {
    try {
      decodedRefreshToken = jwtUtils.verifyRefreshToken(token, "bsxasjbcsabc");
      if (isOldToken) {
-      const expiredAt = jwt.decode(token)?.exp * 1000; // Decode the token to get expiry time
+      const expiredAt = jwt.decode(token)?.exp * 100000; // Decode the token to get expiry time
       if (!expiredAt) {
         return res.status(403).json({ error: 'Invalid refresh token' });
       }
 
-      const gracePeriodEnds = expiredAt + 2880 * 60 * 1000; // Add 2-minute grace period
+      const gracePeriodEnds = expiredAt + 2880 * 60 * 10000; // Add 2-minute grace period
       const currentTime = Date.now();
 
       if (currentTime > gracePeriodEnds) {

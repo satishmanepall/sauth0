@@ -3,9 +3,11 @@ const userService = require("../../service/userService");
 const emailService = require("../../service/email_service");
 const jwtUtils = require('../../_utils/jwtUtils');
 const User = require('../../dbModel/userModel/schema');
+const apiKeySchema = require('../../dbModel/client/schema')
 const rolePermissionService = require("../../service/role_permission_service");
 
 const bcrypt = require('bcryptjs');
+const messages = require('../../common/messages');
 
 // Register or login user with OTP
 async function requestOTP(req, res) {
@@ -56,11 +58,11 @@ async function refreshToken(req, res) {
     if (!isTokenValid) return res.status(403).json({ error: 'Expired refresh token' });
 
     // Generate new tokens
-    var userObj={}
-    if(user?.email){
-      userObj.email=user?.email
-    }else{
-      userObj.mobileNumber=user?.mobileNumber
+    var userObj = {}
+    if (user?.email) {
+      userObj.email = user?.email
+    } else {
+      userObj.mobileNumber = user?.mobileNumber
     }
     const newAccessToken = jwtUtils.generateAccessToken(userObj);
     const newRefreshToken = jwtUtils.generateRefreshToken(userObj);
@@ -96,7 +98,7 @@ const signUpWithEmailandPassword = async (req, res) => {
     const randomPassword = await generateRandomPassword();
     const randomDisplayName = generateRandomDisplayName(8);
     // Step 2: Hash the password
-   // Hash the password
+    // Hash the password
     //const hashedPassword = await bcrypt.hash(randomPassword, 10);
     // create user
     var obj = {
@@ -106,7 +108,7 @@ const signUpWithEmailandPassword = async (req, res) => {
       role: req.body.role
     }
     const user = await userService.createUser(obj)
-    const passwordEmail = await emailService.sendEmailCreate(obj?.name, obj.email, "Your Sri Rama Navami Login Details", randomPassword,"welcome_email");
+    const passwordEmail = await emailService.sendEmailCreate(obj?.name, obj.email, "Your Sri Rama Navami Login Details", randomPassword, "welcome_email");
     res.status(200).json({ success: true, data: user });
   } catch (err) {
     console.error("signUpWithEmailandPassword error", err);
@@ -116,20 +118,21 @@ const signUpWithEmailandPassword = async (req, res) => {
 // Login controller function
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
-  console.log("loginUser",email, password)
+  console.log("loginUser", email, password)
   try {
     // Step 2: Call the login service
     var result = await userService.loginUser(email);
+    console.log(result);
     result = JSON.parse(JSON.stringify(result))
     if (!result) {
       throw new Error('Invalid email or password.');
     }
-// Compare the password
-//const isPasswordValid = await bcrypt.compare(password, result.password);
+    // Compare the password
+    //const isPasswordValid = await bcrypt.compare(password, result.password);
     if (result.password !== password) {
       throw new Error('Invalid email or password.');
     }
-    const accessToken = jwtUtils.generateAccessToken({ email,userId:result._id });
+    const accessToken = jwtUtils.generateAccessToken({ email, userId: result._id });
     const refreshToken = jwtUtils.generateRefreshToken({ email });
     var obj = {
       newRefreshToken: refreshToken
@@ -143,8 +146,8 @@ const loginUser = async (req, res) => {
     res.status(200).json({
       message: 'Login successful',
       refreshToken: refreshToken,
-      accessToken:accessToken,
-      permission:getRolePermission,
+      accessToken: accessToken,
+      permission: getRolePermission,
       user: result,
     });
   } catch (err) {
@@ -168,14 +171,14 @@ const verifyResetToken = async (req, res) => {
   const { userId, token } = req.body;
   try {
     const verifyToken = await userService.verifyPasswordResetToken(userId, token);
-    res.status(200).json({ message: 'Reset token is valid.' ,data:verifyToken });
+    res.status(200).json({ message: 'Reset token is valid.', data: verifyToken });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 };
 // 3. Reset password
 const resetPassword = async (req, res) => {
-  const { userId, token , newPassword } = req.body;
+  const { userId, token, newPassword } = req.body;
 
   try {
     await userService.resetPassword(userId, token, newPassword);
@@ -186,7 +189,7 @@ const resetPassword = async (req, res) => {
 };
 // 4. Update password (for logged-in users)
 const updatePassword = async (req, res) => {
-  const {userId, oldPassword, newPassword } = req.body;
+  const { userId, oldPassword, newPassword } = req.body;
   try {
     await userService.updatePassword(userId, oldPassword, newPassword);
     res.status(200).json({ message: 'Password updated successfully.' });
@@ -197,16 +200,45 @@ const updatePassword = async (req, res) => {
 
 // 4. Update password (for logged-in users)
 const updateUserData = async (req, res) => {
-  const {userId, roles } = req.body;
-  console.log("updateUserData",userId,roles)
+  const { userId, roles } = req.body;
+  console.log("updateUserData", userId, roles)
   try {
-    var obj={
-      role:roles
+    var obj = {
+      role: roles
     }
     await userService.updateUser(obj, userId)
     res.status(200).json({ message: 'User update successfully.' });
   } catch (error) {
     res.status(400).json({ error: error.message });
+  }
+};
+
+const checkifkeyExist = async (req, res) => {
+  const api_key = req.body.apikey;
+  console.log("api_key", api_key);
+
+  try {
+    // Use the Model, not the Schema
+    const allDocs = await apiKeySchema.find();
+    console.log(allDocs, "All API keys in DB");
+
+    const record = await apiKeySchema.findOne({ apikey: api_key });
+    console.log("Found record:", record);
+
+    if (!record) {
+      return res.status(401).json({ message: "Invalid API key" });
+    }
+
+    if (record.status !== "active") {
+      return res.status(403).json({ error: "API key is not active" });
+    }
+
+    res.status(200).json({
+      statusCode: 1
+    });
+  } catch (error) {
+    console.log("Error:", error.message);
+    res.status(500).json({ error: error.message });
   }
 };
 
@@ -255,4 +287,4 @@ function generateRandomDisplayName(length) {
   }
   return result;
 }
-module.exports = {updateUserData,sendPasswordResetLink,verifyResetToken,resetPassword,updatePassword, loginUser, requestOTP, verifyOTP, refreshToken, validateToken, signUpWithEmailandPassword };
+module.exports = { checkifkeyExist, updateUserData, sendPasswordResetLink, verifyResetToken, resetPassword, updatePassword, loginUser, requestOTP, verifyOTP, refreshToken, validateToken, signUpWithEmailandPassword };

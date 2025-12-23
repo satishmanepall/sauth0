@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 
 function generateAccessToken(payload) {
-  return jwt.sign(payload, "bsxasjbcsabc", { expiresIn: '3m' });
+  return jwt.sign(payload, "bsxasjbcsabc", { expiresIn: '1d' });
 }
 
 function generateRefreshToken(payload) {

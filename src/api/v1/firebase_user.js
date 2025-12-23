@@ -3,6 +3,7 @@ const userService = require("../../service/user_service");
 const emailService = require("../../service/email_service");
 const rolePermissionService = require("../../service/role_permission_service");
 const crypto = require('crypto');
+const messages = require("../../common/messages");
 
 const sendTestEmailApi = async (req, res) => {
   try {
@@ -61,16 +62,20 @@ const checkAuth = async (req, res) => {
     //const uid = await firebaseService.verifyAuthToken(req.body.auth_token);
     //const firebaseId=uid
     let getUser = await userService.getUserById(req.user.userId)
+    // console.log("@@",getUser);
     getUser = JSON.parse(JSON.stringify(getUser));
     const role=getUser.role[0]
     const operation =req.body.operation
     let getRolePermission = await rolePermissionService.getRolePermissionByRole(role)
+    //console.log("@@",getRolePermission);
     getRolePermission = JSON.parse(JSON.stringify(getRolePermission));
     var isauthorized =false
     if (getRolePermission.permissions && getRolePermission.permissions[operation] === true) {
       isauthorized=true
     }
     message = { isauthorized: isauthorized, user_id:req.user.userId ,permission:getRolePermission};
+
+   
     res.status(200).json({ success: true, message });
   } catch (err) {
     console.log("checkAuth error", err);

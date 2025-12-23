@@ -42,6 +42,7 @@ v1Routes.post('/reset-password', authRoutesAPI.resetPassword);
 v1Routes.post('/update-password', authRoutesAPI.updatePassword);
 v1Routes.post('/login', authRoutesAPI.loginUser);
 v1Routes.post('/user/update', authRoutesAPI.updateUserData);
+v1Routes.post('/key/check',authRoutesAPI.checkifkeyExist)
 
 
 //sms routs

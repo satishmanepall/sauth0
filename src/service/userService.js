@@ -1,6 +1,6 @@
 const User = require("../dbModel/userModel/schema");
 const crypto = require('crypto');
-const bcrypt = require('bcrypt');
+//const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 require("dotenv").config();
 const emailService = require("./email_service"); // Your existing email utility function

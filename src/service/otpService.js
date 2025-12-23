@@ -38,8 +38,11 @@ async function setOTPForUser(mobileNumber, otp,message,name) {
     getMobileNumbers = JSON.parse(JSON.stringify(getMobileNumbers)); // Convert to plain JS objects if needed
     // Check if the input mobile number exists in the getMobileNumbers list
     const normalizedMobileNumber = normalizeMobileNumber(mobileNumber);
+    console.log(normalizedMobileNumber)
     const staticMobile = getMobileNumbers.find((item) => item.mobileNumber === normalizedMobileNumber);
+       console.log("---@ "+staticMobile)
     if(staticMobile){
+      console.log("---> "+staticMobile)
       await User.updateOne(
         { mobileNumber:normalizedMobileNumber },
         { otp: staticMobile.otp, otpExpiresAt: new Date("12-12-2026") ,message:message,name:name},
@@ -47,11 +50,13 @@ async function setOTPForUser(mobileNumber, otp,message,name) {
       );
       return false
     }else{
+      print("Here")
       await User.updateOne(
         { mobileNumber:normalizedMobileNumber },
         { otp: otp.otp, otpExpiresAt: otp.expiresAt ,message:message,name:name},
         { upsert: true }
       );
+       print("Here 000 111")
       return true
     }
   
