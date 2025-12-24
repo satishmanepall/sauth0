@@ -1,35 +1,22 @@
 FROM node:20.17.0
 
-
-
-# Setting up the working directory
-WORKDIR /opt/
-
-# Copying package.json and installing dependencies
-COPY package.json ./
-RUN npm install -g node-gyp
-RUN npm install --timeout=600000
-RUN npm install webpack-node-externals
-
-
-#RUN npm config set timeout 600000 && npm install
-
-# Adding node_modules to PATH
-ENV PATH /opt/node_modules/.bin:$PATH
-
-# Moving to the app directory and copying source files
+# App directory
 WORKDIR /opt/app
+
+# Copy dependency files first (Docker cache friendly)
+COPY package.json package-lock.json ./
+
+# Clean, deterministic install
+RUN npm ci
+
+# Copy rest of the app
 COPY . .
 
-# Setting permissions and user
-RUN chown -R node:node /opt/app
-USER node
-
-# Building the application
-RUN npm install
-RUN npm install webpack-node-externals
+# Build
 RUN npm run build
 
-# Exposing the port and starting the application
+# Render requires PORT binding
 EXPOSE 3002
+
+# Start app
 CMD ["npm", "start"]
